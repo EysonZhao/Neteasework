@@ -1,0 +1,27 @@
+<div class="n-head">
+	<div class="g-doc f-cb">
+		<div class="user">
+			<#if !type?exists> 请<a href="/work/login.html">[登录]</a> 
+				<#elseif type == "buyer">
+					<p>${username}你好，欢迎您来购物   <a href="/work/shop/logout">[退出登录]</a></p>
+				<#elseif type == "seller">
+					<p>卖家${username}你好   <a href="/work/shop/logout">[退出登录]</a></p>
+					
+			</#if>
+
+		</div>
+		<ul class="nav">
+			<li><a href="/work/shop/items">首页</a></li> 
+			<#if type?exists> 
+				<#if type == "buyer">
+					<li><a href="/work/shop/bought">账务</a></li>
+					<li><a href="/work/shop/cart">购物车</a></li>
+				<#elseif type=="seller">
+					<li><a href="/work/shop/new">发布</a></li>
+				</#if>
+			</#if>
+		
+		</ul>
+	</div>
+</div>
+<div class="g-doc">

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>登录</title>
+  <link rel="stylesheet" href="css/login.css">
+  <script>  
+		function clicked(){
+			if(username.value.length==0){
+				alert('请输入用户名!');
+				username.placeholder='请输入用户名';
+				return;
+			}
+			var md5 = pwd.value;
+			if(md5.length==0){
+				alert('请输入密码!');
+				username.placeholder='请输入密码';
+				return;
+			}
+			md5 = hex_md5(md5);
+			pwd.value=md5;
+			loginform.submit();
+		}
+  </script> 
+  <script type="text/ecmascript" src="javascript/md5.js"></script>  
+</head>
+<body>
+
+  <section class="container">
+    <div class="login">
+      <h1>用户登录</h1>
+      <form id="loginform" method="post" action="/work/shop/login">
+        <p><input id="username" type="text" name="name"  placeholder="用户名"></p>
+        <p><input id="pwd" type="password" name="password"  placeholder="密码"></p>
+        <p><input type="radio" name="type" value="buyer" checked="checked" />我是买家  
+           <input type="radio" name="type" value="seller" />我是卖家 
+        </p>
+      </form>
+      <p class="submit">
+        	<button id="submitbtn" onclick="clicked()">
+        		登录
+        	</button>
+      </p>
+    </div>
+
+  </section>
+</body>
+</html>

@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+encoding//src/main/webapp/freemarker/bought.ftl=UTF-8
+encoding//src/main/webapp/freemarker/cart.ftl=UTF-8
+encoding//src/main/webapp/freemarker/detailItem.ftl=UTF-8
+encoding//src/main/webapp/freemarker/editItem.ftl=UTF-8
+encoding//src/main/webapp/freemarker/header.html=UTF-8
+encoding//src/main/webapp/freemarker/loginError.ftl=UTF-8
+encoding//src/main/webapp/freemarker/loginSuccess.ftl=UTF-8
+encoding//src/main/webapp/freemarker/loginUnvalidate.ftl=UTF-8
+encoding//src/main/webapp/freemarker/showItems.ftl=UTF-8
+encoding//src/main/webapp/testPages/test.ftl=UTF-8
