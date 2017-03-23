@@ -25,10 +25,21 @@ public class ShowItemsOnSale {
 	private BuyerBehaviorDao buyerDao  = null;
 	private SellerBehaviorDao sellerDao = null;
 	
+	//工具类1：初始化注入dao实例
 	private void initializeDao(){
 		DBBean.InitialDBConnect();
 		buyerDao = DBBean.context.getBean("BuyerBehaviorDao", BuyerBehaviorDao.class);
 		sellerDao = DBBean.context.getBean("SellerBehaviorDao", SellerBehaviorDao.class);
+	}
+	//工具类2：检验登录用户的类别
+	private boolean testUserAutority(HttpSession session){
+		if (buyerDao == null||sellerDao == null) {
+			initializeDao();
+		}
+		if(session.getAttribute("type")==null||session.getAttribute("type")=="seller"){
+			return false;
+		}
+		return true;
 	}
 	
 //对买家展示所有出售的物品
@@ -94,11 +105,9 @@ public class ShowItemsOnSale {
 	 */
 	@RequestMapping("/itemsunbought")
 	public String boughtItems(HttpServletRequest request, ModelMap model){
-		if(buyerDao == null){
-			initializeDao();
-		}
+
 		HttpSession session = request.getSession();
-		if(session.getAttribute("userid")==null){
+		if(!testUserAutority(session)){
 			return "loginUnvalidate";
 		}
 		int bid = (Integer) session.getAttribute("userid");
@@ -182,11 +191,8 @@ public class ShowItemsOnSale {
 	 */
 	@RequestMapping("/cart")
 	public String showCartItems(ModelMap modelmap,HttpServletRequest request){
-		if(buyerDao==null){
-			initializeDao();
-		}
 		HttpSession session = request.getSession();
-		if(session.getAttribute("userid")==null){
+		if(!testUserAutority(session)){
 			return "loginUnvalidate";
 		}
 		int bid = (Integer)session.getAttribute("userid");
@@ -227,17 +233,15 @@ public class ShowItemsOnSale {
 		
 		return "bought";
 	}
-	
+	/**
+	 * 进入“账户”界面，查看已购买商品
+	 */
 	@RequestMapping("/bought")
 	public String boughtItemsList(HttpServletRequest request,ModelMap modelmap){
-		if(buyerDao==null){
-			initializeDao();
-		}
 		HttpSession session = request.getSession();
-		if(session.getAttribute("userid")==null){
+		if(!testUserAutority(session)){
 			return "loginUnvalidate";
 		}
-		
 		int bid = (Integer)session.getAttribute("userid");
 		List<boughtlistItem> bought = buyerDao.selectAllBoughtItems(bid);
 		modelmap.addAttribute("boughtItems", bought);
@@ -251,6 +255,26 @@ public class ShowItemsOnSale {
 		modelmap.addAttribute("sum", sum);
 		
 		return "bought";
+	}
+	
+	/**
+	 * 操作删除购物车一条商品
+	 */
+	@RequestMapping("/deletecart")
+	public String deleteAnItemFromCart(@RequestParam int id,
+			ModelMap modelmap, HttpServletRequest request){
+		HttpSession session = request.getSession();
+		if(!testUserAutority(session)){
+			return "loginUnvalidate";
+		}
+		//删除该商品
+		buyerDao.deleteAnItemFromCart(id);
+		int bid = (Integer)session.getAttribute("userid");
+		//重新加载购物车信息
+		List<cartItem> cartItems = buyerDao.selectItemsInCart(bid);
+		
+		modelmap.addAttribute("cartItems", cartItems);
+		return "cart";
 	}
 
 }

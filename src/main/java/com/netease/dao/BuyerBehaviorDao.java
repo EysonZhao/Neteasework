@@ -169,6 +169,16 @@ public class BuyerBehaviorDao {
 		 
 		 return this.jdbcTemplate.query(sql, paramMap, new itemRowMapper());
 	 }
-	
+	 
+	 /**
+	  * 7.删除一条购物车信息
+	  */
+	public void deleteAnItemFromCart(int iid){
+		paramMap.clear();
+		paramMap.put("iid", iid);
+		
+		String sql = "delete from cart where iid=:iid";
+		jdbcTemplate.update(sql,paramMap);
+	}
 	
 }

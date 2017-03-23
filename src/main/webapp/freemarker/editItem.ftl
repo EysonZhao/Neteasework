@@ -26,7 +26,12 @@
 	    		if(filesize>1024){
 	    			alert("文件大小超过限制，请上传1MB之内的图片！");
 	    			fileUp.files[0]=null;
+	    			submitform.disabled="disabled";
+	    			submitform.style.display="none";
+	    			return;
 	    		}
+	    		submitform.disabled="";
+	    		submitform.style.display="";
 	    	}
 	    	function submitForm(){
 	    	if (fname.value.length==0){
@@ -49,12 +54,23 @@
 	    		alert('请输入正确的数值！');
 	    		return;
 	    	}
-	    	 if (typeof(pic_type) != "undefined") 
-	    		if(pic_type=='file'){
-	    				form.action = form.action+'withimg';
-	    		}
-	    	 form.submit();
+	    	if(typeof(pic_type)!='undefined'){
+		    	if(pic_type=='file'){
+		    		if(fileUp.files[0]==null){
+		    			alert('上传图片不能为空！');
+		    			return;
+		    		}
+		    		form.action = form.action+'withimg';
+		    	}
+		    	else{
+		    		if(urlvalue.value.lenght<=1){
+		    			alert('请输入图片url！');
+		    			return ;
+		    		}
+		    	}
 	    	}
+	    	 form.submit();
+	    }
 
 	    </script>
 	</head>
@@ -128,10 +144,11 @@
 		    </div>
 		</form>
 		<div class="fmipt">
-			    <button onclick="submitForm()" class="u-btn u-btn-primary u-btn-lg">发 布</button>
+			    <button id="submitform" onclick="submitForm()" class="u-btn u-btn-primary u-btn-lg">
+			   	 发 布</button>
 		</div>
 		<span class="imgpre">
-			<img <#if picture?exists>src=${picture}</#if> id="image" />
+			<img id="image" <#if picture?exists>src=${picture}</#if> />
 		</span>
 			
 		</div>

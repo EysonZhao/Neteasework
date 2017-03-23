@@ -1,9 +1,13 @@
 package com.netease.controller;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +36,17 @@ public class SellerHandleItems {
 		return EncodeString.encodeStr(str);
 	}
 	
+	//工具类3：检验用户是否登录，bean是否初始化完毕
+	private boolean testUserAuthority(HttpSession session){
+		if (sellerDao == null) {
+			initializeDao();
+		}
+		if(session.getAttribute("type")==null||session.getAttribute("type")=="buyer"){
+			return false;
+		}
+		return true;
+		
+	}
 	/**
 	 * 初始化响应新建功能，对应操作editItem的初始化工作
 	 * @param modelmap,request
@@ -41,7 +56,7 @@ public class SellerHandleItems {
 	@RequestMapping("/new")
 	public String newAnItem(ModelMap modelmap, HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		if (session.getAttribute("userid") == null) {
+		if (!testUserAuthority(session)) {
 			return "loginUnvalidate";
 		}
 		modelmap.addAttribute("modify", false);
@@ -57,16 +72,17 @@ public class SellerHandleItems {
 	 *         值得注意的是，这里涉及到了从前端传入数据，因此需要将java默认编码(unicode)强制转换成本项目使用的UTF-8
 	 */
 	@RequestMapping(path = "/insertitem", method = RequestMethod.POST)
-	public String insertAnItem(@RequestParam String iname, @RequestParam String abs, @RequestParam String introduce,
-			@RequestParam String price, @RequestParam String picture, ModelMap modelmap, HttpServletRequest request) {
-		if (sellerDao == null) {
-			initializeDao();
-		}
+	public String insertAnItem(@RequestParam String iname, 
+			@RequestParam String abs, 
+			@RequestParam String introduce,
+			@RequestParam String price, 
+			@RequestParam String picture, 
+			ModelMap modelmap, 
+			HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		if (session.getAttribute("userid") == null) {
+		if (!testUserAuthority(session)) {
 			return "loginUnvalidate";
 		}
-		// 无用户登录，返回错误界面
 
 		int sid = (Integer) session.getAttribute("userid");
 		// post传入的可能有中文的String参数均需要解码: iname,abs,introduce
@@ -81,12 +97,11 @@ public class SellerHandleItems {
 		sellerDao.insertAnItemBySeller(sid, iname_s, abs_s, introduce_s, price_s, picture);
 		return "redirect:items";
 	}
-	/**
+	/**************************************************************************
 	 * 上传图片插入一条商品记录
 	 * @param iname, abs, introduce,price,file,modelmap,request
 	 * @return "items"界面
 	 */
-	
 	@RequestMapping(path = "/insertitemwithimg", method = RequestMethod.POST)
 	public String insertAnItem(@RequestParam String iname, 
 			@RequestParam String abs, 
@@ -95,14 +110,11 @@ public class SellerHandleItems {
 			@RequestParam CommonsMultipartFile file, 
 			ModelMap modelmap, 
 			HttpServletRequest request) {
-		if (sellerDao == null) {
-			initializeDao();
-		}
 		HttpSession session = request.getSession();
-		if (session.getAttribute("userid") == null) {
+		if (!testUserAuthority(session)) {
 			return "loginUnvalidate";
 		}
-		// 无用户登录，返回错误界面
+		// 无用户登录或者登录买家账户，返回错误界面
 
 		int sid = (Integer) session.getAttribute("userid");
 		// post传入的可能有中文的String参数均需要解码: iname,abs,introduce
@@ -115,16 +127,16 @@ public class SellerHandleItems {
 		modelmap.addAttribute("modify", false);
 		
 		String path = request.getSession().getServletContext().getRealPath("/")+ "img\\";
-		System.out.println(path);
 
 		String url1 = request.getLocalAddr();;
 		String url2 = request.getContextPath();
-		String url = "http://"+url1+":8080"+url2+"/img/"+param2Str(file.getOriginalFilename());
-		
+
+		String url = "http://"+url1+":8080"+url2+"/img/";
+		String filename = "";
 		try {
 			System.out.println(path);
 			File target = new File(path);
-			FileUploadHelper.upload(file, target);
+			filename = FileUploadHelper.upload(file, target);
 			
 			System.out.println("文件上传成功");
 		} catch (Exception e) {
@@ -132,21 +144,21 @@ public class SellerHandleItems {
 			System.out.println("文件上传失败！");
 		}
 		
-		sellerDao.insertAnItemBySeller(sid, iname_s, abs_s, introduce_s, price_s, url);
+		sellerDao.insertAnItemBySeller(sid, iname_s, abs_s, introduce_s, price_s, url+filename);
 		
 		return "redirect:items";
 	}
 
-	/**
+	/**************************************************************************
 	 * 初始化更改商品界面，返回编辑商品界面
 	 * @param modelmap
 	 * @return 
 	 */
-
 	@RequestMapping("/edit")
-	public String modifyAnItem(ModelMap modelmap, @RequestParam int id) {
-		if (sellerDao == null) {
-			initializeDao();
+	public String modifyAnItem(ModelMap modelmap,@RequestParam int id,HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		if (!testUserAuthority(session)) {
+			return "loginUnvalidate";
 		}
 		modelmap.addAttribute("modify", true);
 		modelmap.addAttribute("id", id);
@@ -162,9 +174,8 @@ public class SellerHandleItems {
 		return "editItem";
 	}
 
-	/**
+	/**************************************************************************
 	 * 修改一个商品信息
-	 * 
 	 * @return
 	 */
 	@RequestMapping(path = "/modifyitem", method = RequestMethod.POST)
@@ -176,14 +187,10 @@ public class SellerHandleItems {
 			@RequestParam String picture, ModelMap modelmap,
 			HttpServletRequest request) {
 
-		if (sellerDao == null) {
-			initializeDao();
-		}
 		HttpSession session = request.getSession();
-		if (session.getAttribute("userid") == null) {
+		if (!testUserAuthority(session)) {
 			return "loginUnvalidate";
 		}
-		// 无用户登录，返回错误界面
 
 		// post传入的可能有中文的String参数均需要解码: iname,abs,introduce
 		String iname_s = param2Str(iname);
@@ -198,7 +205,7 @@ public class SellerHandleItems {
 
 	}
 	
-	/**
+	/**************************************************************************
 	 * 上传图片修改商品界面
 	 * @param iid,iname,abs,introduce,price,file,modelmap,request
 	 * @return
@@ -213,14 +220,10 @@ public class SellerHandleItems {
 			ModelMap modelmap,
 			HttpServletRequest request) {
 
-		if (sellerDao == null) {
-			initializeDao();
-		}
 		HttpSession session = request.getSession();
-		if (session.getAttribute("userid") == null) {
+		if (!testUserAuthority(session)) {
 			return "loginUnvalidate";
 		}
-		// 无用户登录，返回错误界面
 
 		// post传入的可能有中文的String参数均需要解码: iname,abs,introduce
 		String iname_s = param2Str(iname);
@@ -234,12 +237,14 @@ public class SellerHandleItems {
 
 		String url1 = request.getLocalAddr();
 		String url2 = request.getContextPath();
-		String url = "http://"+url1+":8080"+url2+"/img/"+param2Str(file.getOriginalFilename());
+		
+		String url = "http://"+url1+":8080"+url2+"/img/";
+		String filename = "";
 		
 		try {
 			System.out.println(path);
 			File target = new File(path);
-			FileUploadHelper.upload(file, target);
+			filename=FileUploadHelper.upload(file, target);
 			
 			System.out.println("文件上传成功");
 		} catch (Exception e) {
@@ -247,19 +252,21 @@ public class SellerHandleItems {
 			System.out.println("文件上传失败！");
 		}
 
-		sellerDao.updateItemBySeller(iid_s, iname_s, abs_s, introduce_s, price_s, url);
+		sellerDao.updateItemBySeller(iid_s, iname_s, abs_s, introduce_s, price_s, url+filename);
 
 		return "redirect:show?id=" + iid;
 	}
-	/**
+	
+	/*********************************************************************
 	 * 删除一个未出售的商品
 	 * @param id
 	 * @return "items"商品界面
 	 */
 	@RequestMapping("/delete")
-	public String deleteUnsoldItem(@RequestParam int id) {
-		if (sellerDao == null) {
-			initializeDao();
+	public String deleteUnsoldItem(@RequestParam int id,HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		if (!testUserAuthority(session)) {
+			return "loginUnvalidate";
 		}
 		sellerDao.deleteItemBySeller(id);
 		return "redirect:items";
